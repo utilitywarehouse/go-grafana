@@ -62,6 +62,31 @@ func (ds *DashboardsService) Get(ctx context.Context, slug string) (*grafana.Das
 	return &d, nil
 }
 
+// Get fetches a dashboard by given uid.
+//
+// Grafana API docs: http://docs.grafana.org/http_api/dashboard/#get-dashboard
+func (ds *DashboardsService) GetByUID(ctx context.Context, uid string) (*grafana.Dashboard, error) {
+	u := fmt.Sprintf("/api/dashboards/uid/%s", uid)
+	req, err := ds.client.NewRequest(ctx, "GET", u, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var dResp dashboardGetResponse
+	if resp, err := ds.client.Do(req, &dResp); err != nil {
+		if resp != nil {
+			if resp.StatusCode == http.StatusNotFound {
+				return nil, ErrDashboardNotFound
+			}
+		}
+		return nil, err
+	}
+
+	d := dResp.Dashboard
+	d.Meta = dResp.Meta
+	return &d, nil
+}
+
 type dashboardGetResponse struct {
 	Dashboard grafana.Dashboard      `json:"dashboard"`
 	Meta      *grafana.DashboardMeta `json:"meta"`
@@ -151,8 +176,10 @@ func (ds *DashboardsService) Search(ctx context.Context, opt *DashboardSearchOpt
 // DashboardHit represents a found by DashboardsService.Search dashboard
 type DashboardHit struct {
 	ID        int64    `json:"id"`
+	UID       string   `json:"uid"`
 	Title     string   `json:"title"`
 	URI       string   `json:"uri"`
+	URL       string   `json:"uri"`
 	Tags      []string `json:"tags"`
 	IsStarred bool     `json:"isStarred"`
 }
