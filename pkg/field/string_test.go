@@ -18,7 +18,7 @@ import (
 	"reflect"
 	"testing"
 
-	jsontools "github.com/spoof/go-grafana/pkg/json"
+	jsontools "github.com/utilitywarehouse/go-grafana/pkg/json"
 )
 
 func TestForceString_UnmarshalJSON(t *testing.T) {

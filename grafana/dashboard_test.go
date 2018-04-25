@@ -19,8 +19,8 @@ import (
 	"testing"
 
 	"github.com/kr/pretty"
-	"github.com/spoof/go-grafana/grafana/panel"
-	"github.com/spoof/go-grafana/pkg/field"
+	"github.com/utilitywarehouse/go-grafana/grafana/panel"
+	"github.com/utilitywarehouse/go-grafana/pkg/field"
 )
 
 // JSONBytesEqual compares the JSON in two byte slices.

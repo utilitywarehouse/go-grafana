@@ -17,7 +17,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/spoof/go-grafana/pkg/field"
+	"github.com/utilitywarehouse/go-grafana/pkg/field"
 )
 
 func TestTags_Set(t *testing.T) {

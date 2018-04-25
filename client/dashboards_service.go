@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/spoof/go-grafana/grafana"
+	"github.com/utilitywarehouse/go-grafana/grafana"
 )
 
 // DashboardsService communicates with dashboard methods of the Grafana API.

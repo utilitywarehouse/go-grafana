@@ -7,8 +7,8 @@ import (
 
 	"github.com/guregu/null"
 	"github.com/kr/pretty"
-	"github.com/spoof/go-grafana/pkg/field"
-	jsontools "github.com/spoof/go-grafana/pkg/json"
+	"github.com/utilitywarehouse/go-grafana/pkg/field"
+	jsontools "github.com/utilitywarehouse/go-grafana/pkg/json"
 )
 
 func TestGraph_MarshalJSON(t *testing.T) {

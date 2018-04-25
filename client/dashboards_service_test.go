@@ -22,7 +22,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/spoof/go-grafana/grafana"
+	"github.com/utilitywarehouse/go-grafana/grafana"
 )
 
 func TestDashboardsService_Get(t *testing.T) {

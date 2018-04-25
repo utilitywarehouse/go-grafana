@@ -17,9 +17,8 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/spoof/go-grafana/grafana/panel"
-	panelQuery "github.com/spoof/go-grafana/grafana/query"
-	"github.com/spoof/go-grafana/pkg/field"
+	"github.com/utilitywarehouse/go-grafana/grafana/panel"
+	panelQuery "github.com/utilitywarehouse/go-grafana/grafana/query"
 )
 
 type (
@@ -34,21 +33,54 @@ const (
 )
 
 type Dashboard struct {
-	ID            DashboardID `json:"-"`
-	Version       uint64      `json:"-"`
-	SchemaVersion int         `json:"schemaVersion"`
-
-	Editable     bool           `json:"editable"`
-	GraphTooltip uint8          `json:"graphTooltip"`
-	HideControls bool           `json:"hideControls"`
-	Rows         []*Row         `json:"rows"`
-	Style        dashboardStyle `json:"style"`
-	Timezone     string         `json:"timezone"`
-	Title        string         `json:"title"`
-	Tags         *field.Tags    `json:"tags"`
-	Variables    Variables      `json:"templating"`
-
-	Meta *DashboardMeta `json:"-"`
+	Annotations struct {
+		List []interface{} `json:"list"`
+	} `json:"annotations"`
+	Editable      bool            `json:"editable"`
+	GraphTooltip  int             `json:"graphTooltip"`
+	HideControls  bool            `json:"hideControls"`
+	ID            DashboardID     `json:"-"`
+	Links         []interface{}   `json:"links"`
+	Refresh       interface{}     `json:"refresh"`
+	Rows          []*DashboardRow `json:"rows"`
+	SchemaVersion int             `json:"schemaVersion"`
+	Style         dashboardStyle  `json:"style"`
+	Tags          []string        `json:"tags"`
+	Templating    struct {
+		List []struct {
+			Auto      bool   `json:"auto"`
+			AutoCount int    `json:"auto_count"`
+			AutoMin   string `json:"auto_min"`
+			Current   struct {
+				Text  string      `json:"text"`
+				Value interface{} `json:"value"`
+			} `json:"current"`
+			Hide    int         `json:"hide"`
+			Label   interface{} `json:"label"`
+			Name    string      `json:"name"`
+			Options []struct {
+				Selected bool        `json:"selected"`
+				Text     string      `json:"text"`
+				Value    interface{} `json:"value"`
+			} `json:"options"`
+			Query   string `json:"query"`
+			Refresh int    `json:"refresh"`
+			Type    string `json:"type"`
+		} `json:"list"`
+	} `json:"templating"`
+	Time struct {
+		From string `json:"from"`
+		To   string `json:"to"`
+	} `json:"time"`
+	Timepicker struct {
+		RefreshIntervals []string `json:"refresh_intervals"`
+		TimeOptions      []string `json:"time_options"`
+	} `json:"timepicker"`
+	Timezone string         `json:"timezone"`
+	Title    string         `json:"title"`
+	UID      string         `json:"uid"`
+	Version  uint64         `json:"-"`
+	Meta     *DashboardMeta `json:"meta"`
 }
 
 // NewDashboard creates new Dashboard.
@@ -58,120 +90,110 @@ func NewDashboard(title string) *Dashboard {
 		Editable:      true,
 		SchemaVersion: 14,
 		Style:         dashboardDarkStyle,
-		Tags:          field.NewTags(),
+		Tags:          []string{},
 	}
-}
-
-// MarshalJSON implements json.Marshaler interface
-func (d *Dashboard) MarshalJSON() ([]byte, error) {
-	panelID := 1
-	rows := make([]*Row, len(d.Rows))
-	for i, r := range d.Rows {
-		rr := *r
-
-		panels := make([]Panel, len(r.Panels))
-		for j, p := range r.Panels {
-			panels[j] = &probePanel{
-				ID:    uint(panelID),
-				panel: p,
-			}
-			panelID++
-		}
-		rr.Panels = panels
-		rows[i] = &rr
-	}
-
-	type JSONDashboard Dashboard
-	jd := &struct {
-		JSONDashboard
-		Rows []*Row   `json:"rows"`
-		Tags []string `json:"tags"`
-	}{
-		JSONDashboard: (JSONDashboard)(*d),
-		Rows:          rows,
-		Tags:          d.Tags.Value(),
-	}
-	return json.Marshal(jd)
-}
-
-// UnmarshalJSON implements json.Unmarshaler interface
-func (d *Dashboard) UnmarshalJSON(data []byte) error {
-	type JSONDashboard Dashboard
-	inDashboard := struct {
-		*JSONDashboard
-		ID      *DashboardID `json:"id"`
-		Version *uint64      `json:"version"`
-
-		Tags []string       `json:"tags"`
-		Meta *DashboardMeta `json:"meta"`
-	}{
-		JSONDashboard: (*JSONDashboard)(d),
-		ID:            &d.ID,
-		Version:       &d.Version,
-		Meta:          d.Meta,
-	}
-	if err := json.Unmarshal(data, &inDashboard); err != nil {
-		return err
-	}
-
-	d.Tags = field.NewTags(inDashboard.Tags...)
-
-	return nil
 }
 
 type DashboardMeta struct {
-	Slug    string `json:"slug"`
-	Type    string `json:"type"`
-	Version int    `json:"version"`
-
-	CanEdit bool `json:"canEdit"`
-	CanSave bool `json:"canSave"`
-	CanStar bool `json:"canStar"`
-
-	Created   time.Time `json:"created"`
-	CreatedBy string    `json:"createdBy"`
-	Expires   time.Time `json:"expires"`
-	Updated   time.Time `json:"updated"`
-	UpdatedBy string    `json:"updatedBy"`
+	Type        string    `json:"type"`
+	CanSave     bool      `json:"canSave"`
+	CanEdit     bool      `json:"canEdit"`
+	CanAdmin    bool      `json:"canAdmin"`
+	CanStar     bool      `json:"canStar"`
+	Slug        string    `json:"slug"`
+	URL         string    `json:"url"`
+	Expires     time.Time `json:"expires"`
+	Created     time.Time `json:"created"`
+	Updated     time.Time `json:"-"`
+	UpdatedBy   string    `json:"updatedBy"`
+	CreatedBy   string    `json:"createdBy"`
+	Version     int       `json:"version"`
+	HasAcl      bool      `json:"hasAcl"`
+	IsFolder    bool      `json:"isFolder"`
+	FolderID    int       `json:"folderId"`
+	FolderTitle string    `json:"folderTitle"`
+	FolderURL   string    `json:"folderUrl"`
 }
 
-// Row is panel's row
-type Row struct {
-	Collapsed bool              `json:"collapse"`
-	Editable  bool              `json:"editable"`
-	Height    field.ForceString `json:"height"`
-	Panels    []Panel           `json:"panels"`
-	RepeatFor string            `json:"repeat"` // repeat row for given variable
-	ShowTitle bool              `json:"showTitle"`
-	Title     string            `json:"title"`
-	TitleSize string            `json:"titleSize"` // TODO: validation: h1-h6
-}
-
-// NewRow creates new Row with somw defaults.
-func NewRow() *Row {
-	return &Row{Editable: true}
-}
-
-// UnmarshalJSON implements json.Unmarshaler interface
-func (r *Row) UnmarshalJSON(data []byte) error {
-	type JSONRow Row
-	jr := struct {
-		*JSONRow
-		Panels []probePanel `json:"panels"`
-	}{
-		JSONRow: (*JSONRow)(r),
-	}
-
-	if err := json.Unmarshal(data, &jr); err != nil {
-		return err
-	}
-
-	panels := make([]Panel, len(jr.Panels))
-	for i, p := range jr.Panels {
-		panels[i] = p.panel
-	}
-	r.Panels = panels
-	return nil
+type DashboardRow struct {
+	Collapse bool        `json:"collapse"`
+	Height   interface{} `json:"height"`
+	Panels   []struct {
+		AliasColors struct {
+		} `json:"aliasColors"`
+		Bars       bool   `json:"bars"`
+		DashLength int    `json:"dashLength"`
+		Dashes     bool   `json:"dashes"`
+		Datasource string `json:"datasource"`
+		Editable   bool   `json:"editable"`
+		Error      bool   `json:"error"`
+		Fill       int    `json:"fill"`
+		ID         int    `json:"id"`
+		Legend     struct {
+			Avg     bool `json:"avg"`
+			Current bool `json:"current"`
+			Max     bool `json:"max"`
+			Min     bool `json:"min"`
+			Show    bool `json:"show"`
+			Total   bool `json:"total"`
+			Values  bool `json:"values"`
+		} `json:"legend"`
+		Lines           bool          `json:"lines"`
+		Linewidth       int           `json:"linewidth"`
+		Links           []interface{} `json:"links"`
+		NullPointMode   string        `json:"nullPointMode"`
+		Percentage      bool          `json:"percentage"`
+		Pointradius     int           `json:"pointradius"`
+		Points          bool          `json:"points"`
+		Renderer        string        `json:"renderer"`
+		SeriesOverrides []interface{} `json:"seriesOverrides"`
+		SpaceLength     int           `json:"spaceLength"`
+		Span            float64       `json:"span"`
+		Stack           bool          `json:"stack"`
+		SteppedLine     bool          `json:"steppedLine"`
+		Targets         []struct {
+			Expr           string `json:"expr"`
+			Format         string `json:"format"`
+			Interval       string `json:"interval"`
+			IntervalFactor int    `json:"intervalFactor"`
+			LegendFormat   string `json:"legendFormat"`
+			Metric         string `json:"metric"`
+			RefID          string `json:"refId"`
+			Step           int    `json:"step"`
+		} `json:"targets"`
+		Thresholds interface{} `json:"thresholds"`
+		TimeFrom   interface{} `json:"timeFrom"`
+		TimeShift  interface{} `json:"timeShift"`
+		Title      string      `json:"title"`
+		Tooltip    struct {
+			MsResolution bool   `json:"msResolution"`
+			Shared       bool   `json:"shared"`
+			Sort         int    `json:"sort"`
+			ValueType    string `json:"value_type"`
+		} `json:"tooltip"`
+		Type  string `json:"type"`
+		Xaxis struct {
+			Buckets interface{}   `json:"buckets"`
+			Mode    string        `json:"mode"`
+			Name    interface{}   `json:"name"`
+			Show    bool          `json:"show"`
+			Values  []interface{} `json:"values"`
+		} `json:"xaxis"`
+		Yaxes []struct {
+			Format  string      `json:"format"`
+			Label   string      `json:"label"`
+			LogBase int         `json:"logBase"`
+			Max     interface{} `json:"max"`
+			Min     interface{} `json:"min"`
+			Show    bool        `json:"show"`
+		} `json:"yaxes"`
+	} `json:"panels"`
+	Repeat          interface{} `json:"repeat"`
+	RepeatIteration interface{} `json:"repeatIteration"`
+	RepeatRowID     interface{} `json:"repeatRowId"`
+	ShowTitle       bool        `json:"showTitle"`
+	Title           string      `json:"title"`
+	TitleSize       string      `json:"titleSize"`
 }
 
 //Panel represents Dashboard's panel

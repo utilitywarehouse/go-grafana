@@ -18,7 +18,7 @@ import (
 	"errors"
 
 	"github.com/guregu/null"
-	"github.com/spoof/go-grafana/pkg/field"
+	"github.com/utilitywarehouse/go-grafana/pkg/field"
 )
 
 type graphXAxisMode string

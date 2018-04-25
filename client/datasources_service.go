@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/spoof/go-grafana/grafana"
+	"github.com/utilitywarehouse/go-grafana/grafana"
 )
 
 // DatasourcesService communicates with datasource methods of the Grafana API.

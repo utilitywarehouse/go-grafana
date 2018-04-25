@@ -19,8 +19,8 @@ import (
 	"testing"
 
 	"github.com/kr/pretty"
-	"github.com/spoof/go-grafana/grafana/panel"
-	jsontools "github.com/spoof/go-grafana/pkg/json"
+	"github.com/utilitywarehouse/go-grafana/grafana/panel"
+	jsontools "github.com/utilitywarehouse/go-grafana/pkg/json"
 )
 
 func TestTextPanel_MarshalJSON(t *testing.T) {
